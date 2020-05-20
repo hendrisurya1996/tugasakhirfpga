@@ -1,0 +1,46 @@
+entity TopForInteractingWitIPCores is
+port( clk  : in std_logic; 
+seg  : out std_logic_vector(6 downto 0);
+sel_disp : out std_logic_vector(7 downto 0);
+Sw   : in std_logic_vector (15 downto 0);
+BTNC   : in std_logic;
+reset  : in std_logic);
+end TopForInteractingWitIPCores;
+architecture Behavioral of TopForInteractingWitIPCores is 
+signal BCD4,BCD3,BCD2,BCD1,BCD0 : std_logic_vector(3 downto 0);
+signal BCD2_L,BCD1_L,BCD0_L : std_logic_vector(3 downto 0);
+signal BCD2_R,BCD1_R,BCD0_R : std_logic_vector(3 downto 0);
+signal BCD3_D,BCD2_D,BCD1_D,BCD0_D : std_logic_vector(3 downto 0);
+signal BCD7_D,BCD6_D,BCD5_D,BCD4_D : std_logic_vector(3 downto 0);
+signal To_BCD : std_logic_vector(15 downto0); 
+begin
+Mult: entity work.Multiplier
+port map(a=>Sw(15 downto 8),b=>Sw(7 downto 0),p=>To_BCD); 
+DispCont: entitywork.EightDisplayControl
+port map(clk, BCD7_D,BCD6_D,BCD5_D,BCD4_D,BCD3_D,BCD2_D, BCD1_D,BCD0_D,sel_disp,seg); 
+binTO_BCD1: entitywork.BinToBCD8
+port map(clk,reset,open,Sw(15 downto8),BCD2_L,BCD1_L,BCD0_L); 
+binTO_BCD2:entitywork.BinToBCD8
+port map (clk,reset,open,Sw(7 downto0),BCD2_R,BCD1_R,BCD0_R); 
+binTO_BCD3:entitywork.BinToBCD16
+port map (clk,reset,open,To_BCD,BCD4,BCD3,BCD2,BCD1,BCD0); 
+
+process(BTNC,BCD4,BCD3,BCD2,BCD1,BCD0,
+BCD2_L,BCD1_L,BCD0_L,BCD2_R,BCD1_R,BCD0_R) 
+begin
+BCD7_D <= (others=> '0'); BCD6_D <= (others=> '0');
+BCD5_D <= (others=> '0'); BCD4_D <= (others => '0');
+BCD3_D <= (others=> '0'); BCD2_D <= (others=> '0');
+BCD1_D <= (others=> '0'); BCD0_D <= (others=> '0');
+   if(BTNC = '0') then
+   BCD7_D <=  (others=> '0'); BCD6_D <= BCD2_L;
+   BCD5_D <= BCD1_L; BCD4_D <= BCD0_L;
+   BCD3_D <=  (others=> '0'); BCD2_D <= BCD2_R;
+   BCD1_D <= BCD1_R; BCD0_D <= BCD0_R; 
+   elseBCD7_D <= (others=> '0'); BCD6_D <= (others=> '0');
+   BCD5_D <= (others=> '0'); BCD4_D <= BCD4; 
+   BCD3_D <= BCD3;B CD2_D <= BCD2; 
+   BCD1_D <= BCD1;B CD0_D <= BCD0; 
+   end if;
+end process;
+endBehavioral;
