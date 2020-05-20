@@ -1,0 +1,26 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.all;
+use IEEE.STD_LOGIC_UNSIGNED.all;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+library UNISIM;
+use UNISIM.VComponents.all;
+
+entity TopForInteractingWitIPCores is
+    Port ( x : in  std_logic_vector(15 downto 0);
+           y : in  std_logic;
+           led : out  std_logic_vector(8 downto 0));
+end TopForInteractingWitIPCores;
+
+architecture behavioral of TopForInteractingWitIPCores is
+
+begin
+Arith: entity work.arithmetic
+			port map	(a => x(15 downto 8), b => x(7 downto 0), add => y,
+						 c_in => '0', s => led);
+
+end behavioral;
