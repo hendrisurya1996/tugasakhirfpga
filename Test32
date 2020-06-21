@@ -1,0 +1,42 @@
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.all; 
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Test_HW32 is
+    Port ( Sw : in  STD_LOGIC_VECTOR (15 downto 0);
+           led : out  STD_LOGIC_VECTOR (15 downto 0);
+           in16bit : in  STD_LOGIC_VECTOR (15 downto 0);
+           led_comp : out  STD_LOGIC);
+end Test_HW32;
+
+architecture Behavioral of Test_HW32 is
+	signal threshold : std_logic_vector(5 downto 0);
+	signal HW1, HW2 : std_logic_vector(4 downto 0);
+	signal remaining_inputs1 : std_logic_vector(11 downto 0);
+	signal remaining_inputs2 : std_logic_vector(11 downto 0);
+	signal remaining_outputs1 : std_logic_vector(5 downto 0);
+	signal remaining_outputs2 : std_logic_vector(5 downto 0);
+begin
+
+threshold  <=not "011010" + 1; -- this value of threshold was taken just for test
+remaining_inputs1 <= '0' & HW1 & '0' & HW2;
+remaining_inputs2 <= remaining_outputs1 & threshold;
+led <= remaining_outputs1; 
+
+HWCC16_1: entity work.HW_counter_comparator_16bit
+	port map(Sw, HW1, remaining_inputs1, remaining_outputs1,open); 
+HWCC16_2: entity work.HW_counter_comparator_16bit
+	port map(in16bit, HW2, remaining_inputs2,open, led_comp);	
+
+end Behavioral;
+
