@@ -1,0 +1,51 @@
+library IEEE; -- this is the component for the top-level module above use
+IEEE.STD_LOGIC_1164.all; -- this is 16-bit Hamming weight counter/comparator
+
+entity HW_counter_comparator_16bit is-- this component is used as HWCC16_1 and HWCC16_2 above
+	port ( Sw : in std_logic_vector (15 downto 0);
+		Hamming_weight : out std_logic_vector (4 downto 0);
+		remaining_inputs : in std_logic_vector(11 downto 0);
+		remaining_outputs : out std_logic_vector(5 downto 0);
+		comp : out std_logic);
+end HW_counter_comparator_16bit;
+	
+architecture Behavioral of HW_counter_comparator_16bit is
+	signal a : std_logic_vector(47 downto 0);
+	signal b : std_logic_vector(47 downto 0);
+	signal y : std_logic_vector(47 downto 0); -- A and B are operands for DSP48E1, Y is the result
+begin
+
+process(Sw, Y, remaining_inputs)
+begin
+	A <= (others => '0');
+	B <= (others=> '0'); -- at the beginning the operands are assigned zero values
+
+	for i in 7 downto 0 loop -- see also Fig. 4.10 and Fig. 4.11
+		A(2*i) <= Sw(i);
+		B(2*i) <= Sw(i+8);
+	end loop;
+
+	for i in 3 downto 0 loop
+		A(16+3*i+1 downto 16+3*i) <= Y(2*i+1 downto 2*i);
+		B(16+3*i+1 downto 16+3*i) <= Y(2*i+1+8downto 2*i+8);
+	end loop;
+
+	for i in 1 downto 0 loop
+		A(28+4*i+2 downto 28+4*i) <= Y(16+3*i+2 downto 16+3*i);
+		B(28+4*i+2 downto 28+4*i) <= Y(16+3*i+2+6 downto 16+3*i+6);
+	end loop;
+
+	A(39 downto 36) <= Y(31 downto 28);
+	B(39 downto 36) <= Y(35 downto 32);
+	A(46 downto 41) <= remaining_inputs(5 downto 0);
+	B(46 downto 41) <= remaining_inputs(11 downto 6);
+end process;
+
+Hamming_weight <= Y(40 downto 36); -- the resulting Hamming weight
+comp  <= Y(47); -- the result of comparison
+remaining_outputs <= Y(46 downto 41); -- the threshold is supplied here
+
+DSP : entity work.TesDSP48E1_HW16
+		port map (A,B, "0000", Y);
+
+end Behavioral;
