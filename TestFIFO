@@ -1,0 +1,66 @@
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity TestFIFO is
+    Port ( clk : in  STD_LOGIC;
+           led_full : out  STD_LOGIC;
+           led_empty : out  STD_LOGIC;
+           led_rd_data_count : out  STD_LOGIC_VECTOR(3 downto 0);
+           led_wr_data_count : out  STD_LOGIC_VECTOR(5 downto 0);
+           led_div_clk : out  STD_LOGIC;
+           seg : out  STD_LOGIC_VECTOR(6 downto 0);
+           sel_disp : out  STD_LOGIC_VECTOR(7 downto 0);
+           BTNC : in  STD_LOGIC);
+end TestFIFO;
+
+architecture Behavioral of TestFIFO is
+
+signal divided_clk : std_logic;
+signal random_8bit : std_logic_vector(data_in_size-1 downto 0); 
+signal wr_en: std_logic;
+signal rd_en: std_logic;
+signal to_rg: std_logic_vector(data_out_size-1 downto 0);
+signal full : std_logic; 
+
+begin
+	led_div_clk <= divided_clk;
+	led_full <= full; 
+	
+enables_gen:process(full, BTNC)
+begin
+	if(full /= '1') then wr_en <= '1';
+	else wr_en <= '0'; end if;
+	if(BTNC = '1') then rd_en <= '1';
+	else rd_en <= '0'; end if;
+end process enables_gen; 
+
+FIFO: entity work.FIFO_mem
+		port map (wr_clk => clk, rd_clk => divided_clk,din => random_8bit,
+					wr_en => wr_en,rd_en => rd_en,dout => to_rg,full => full,
+					empty => led_empty,rd_data_count => led_rd_data_count,
+					wr_data_count => led_wr_data_count ); 
+
+Random: entity work.RanGen
+		generic map(width => data_in_size)
+		port map (clk,random_8bit);
+		
+DispCont: entity work.EightDisplayControl
+		port map(clk,to_rg(31 downto 28),to_rg(27 downto 24),to_rg(23 downto 20),
+		to_rg(19 downto 16),to_rg(15 downto 12),to_rg(11 downto 8),
+		to_rg(7 downto 4),to_rg(3 downto 0),sel_disp,seg);
+		
+div:  entity work.clock_divider
+		port map( clk, '0', divided_clk); 
+
+end Behavioral;
+
